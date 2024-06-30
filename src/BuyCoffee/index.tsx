@@ -1,7 +1,7 @@
 import React from 'react';
 import { APP_DESCRIPTION, APP_TITLE, RECIPIENT_ADDRESS } from '~/config';
 import { useWallet, useConnex } from '@vechain/dapp-kit-react';
-import { clauseBuilder, unitsUtils } from '@vechain/sdk-core';
+import { abi, clauseBuilder, unitsUtils } from '@vechain/sdk-core';
 import Transaction from './Transaction';
 import Error from '~/common/Error';
 import SelectToken from './SelectToken';
@@ -25,6 +25,35 @@ export default function BuyCoffee() {
     // state for sending status
     const [txId, setTxId] = React.useState<string>('')
     const [error, setError] = React.useState<string>('')
+
+    const contractAddr = "0xf5ea2b0a68348e7c3a0bc19ab738031d9d0dcbf3";
+    //const { account } = useWallet()
+    //const connex = useConnex()
+    const claimAbi = {
+        "type": "function",
+        "name": "claim",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    }
+    const onClaim = async () => {
+        const fragment = new abi.Function(claimAbi)
+        const clause = {
+            value: 0,
+            data: fragment.encodeInput([]),
+            to: contractAddr,
+            abi: claimAbi
+        }
+
+        try {
+            const result = await connex.vendor.sign("tx", [clause]).signer(account).request();
+            console.log(result);
+        } catch (error) {
+            console.error(error);
+        }
+        
+    }
+
     const handleSend = async () => {
         if (!account || !RECIPIENT_ADDRESS) { return }
 
@@ -42,7 +71,7 @@ export default function BuyCoffee() {
                             ? clauseBuilder.transferToken(selectedToken.address, RECIPIENT_ADDRESS, unitsUtils.parseUnits(amount, selectedToken.decimals))
 
                             // or use the clauseBuilder to transfer VET by default
-                            : clauseBuilder.transferVET(RECIPIENT_ADDRESS, unitsUtils.parseVET(amount))
+                            : clauseBuilder.transferVET(RECIPIENT_ADDRESS, XunitsUtils.parseVET(amount))
                     ),
 
                     // an optional comment is shown to the user in the wallet
@@ -102,7 +131,7 @@ export default function BuyCoffee() {
                 <button
                     className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${!canSend ? 'opacity-25' : ''}`}
                     disabled={!canSend}
-                    onClick={handleSend}
+                    onClick={onClaim}
                 >
                     send {amount} {selectedToken?.symbol ?? 'VET'}
                 </button>
